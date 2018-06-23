@@ -1,0 +1,17 @@
+1. We had a robot that localizing itself.
+2. Let's talk about how to sense other cars. How fast are they moving etc.
+3. Understanding where the cars are. 
+
+    KALMAN FILTER CLASS
+  -----------------------
+
+ - Car uses lasers and radars to sense other cars.
+ - Avoid collision in the future. Bicycle, pedestrians, and cars
+ - Kalman Filter to tracking. To estimate the state.
+
+ - Kalman filter is continious. Monte Carlo Localization is discrete.
+ - Kalman is uni-modal. Monte Carlo is multi modal.
+ - Google self-driving car uses Kalman Filter Class
+
+
+
