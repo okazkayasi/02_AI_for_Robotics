@@ -5,17 +5,17 @@ from robot import *
 from matrix import *
 import random
 
-# This is the function you have to write. The argument 'measurement' is a 
+# This is the function you have to write. The argument 'measurement' is a
 # single (x, y) point. This function will have to be called multiple
 # times before you have enough information to accurately predict the
-# next position. The OTHER variable that your function returns will be 
+# next position. The OTHER variable that your function returns will be
 # passed back to your function the next time it is called. You can use
 # this to keep track of important information over time.
 def estimate_next_pos(measurement, OTHER = None):
     """Estimate the next (x, y) position of the wandering Traxbot
     based on noisy (x, y) measurements."""
 
-    # You must return xy_estimate (x, y), and OTHER (even if it is None) 
+    # You must return xy_estimate (x, y), and OTHER (even if it is None)
     # in this order for grading purposes.
     if not OTHER:
         OTHER = []
@@ -33,6 +33,8 @@ def estimate_next_pos(measurement, OTHER = None):
         OTHER.append(turn_degrees)
         OTHER.append(step_count)
 #        print 'OTHER CREATED'
+#       print more and 
+#       let's add more
         return ([0,0], OTHER)
 
     else:
@@ -81,7 +83,7 @@ def estimate_next_pos(measurement, OTHER = None):
             new_head = angle_trunc(head + average_turn)
         else:
             new_head = head
-        
+
         if turn:
             step_count = 0
 
@@ -110,12 +112,12 @@ def estimate_next_pos(measurement, OTHER = None):
         return ([x, y]), OTHER
 
 
-        
 
 
 
 
-    
+
+
 
 
 def distance_between(point1, point2):
