@@ -85,7 +85,8 @@ def search(grid,init,goal,cost):
             sorted(open_list, key = getKey)
 
         print "new open list:"
-        print open_list
+        for each in open_list:
+            print "     ", each
         print "-----"
 
     return 'fail'
