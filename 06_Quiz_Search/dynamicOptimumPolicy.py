@@ -30,20 +30,16 @@ delta = [[-1, 0 ], # go up
 delta_name = ['^', '<', 'v', '>']
 
 def optimum_policy(grid,goal,cost):
-    # ----------------------------------------
-    # modify code below
-    # ----------------------------------------
+    
     value = [[99 for row in range(len(grid[0]))] for col in range(len(grid))]
     policy = [[' ' for row in range(len(grid[0]))] for col in range(len(grid))]
-    change = True
 
-    value = [[99 for row in range(len(grid[0]))] for col in range(len(grid))]
     goal_x = goal[0]
     goal_y = goal[1]
 
     val = 0
     value[goal_x][goal_y] = val
-    # policy[goal_x][goal_y] = '*'
+    policy[goal_x][goal_y] = '*'
     grid[goal_x][goal_y] = 1
     the_list = [[val, goal_x, goal_y]]
     while len(the_list) > 0:
