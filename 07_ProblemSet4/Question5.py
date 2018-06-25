@@ -95,7 +95,7 @@ def stochastic_value(grid,goal,cost_step,collision_cost,success_prob):
                         new_y = j + delta[new_head][1]
                         new_val += side_prob * wall_value[new_x][new_y]
                         # add one more
-                        new_val += 1
+                        new_val += cost_step
                         if new_val < wall_value[i][j]:
                             wall_value[i][j] = new_val
                             wall_policy[i][j] = delta_name[head]
