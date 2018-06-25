@@ -1,0 +1,11 @@
+1. Yes
+2. No
+3. A* may find a suboptimal path
+4. -------------
+   | 3 | 2 | 2 |
+   -------------
+   | 3 | X | 1 |
+   -------------
+   | 4 | X | 0 |
+   -------------
+5. Presented in Question5.py
