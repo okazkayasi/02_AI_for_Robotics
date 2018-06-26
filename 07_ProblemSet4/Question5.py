@@ -1,10 +1,10 @@
 # --------------
 # USER INSTRUCTIONS
 #
-# Write a function called stochastic_value that 
-# returns two grids. The first grid, value, should 
-# contain the computed value of each cell as shown 
-# in the video. The second grid, policy, should 
+# Write a function called stochastic_value that
+# returns two grids. The first grid, value, should
+# contain the computed value of each cell as shown
+# in the video. The second grid, policy, should
 # contain the optimum policy for each cell.
 #
 # --------------
@@ -44,16 +44,16 @@ def stochastic_value(grid,goal,cost_step,collision_cost,success_prob):
     wall_policy = [[' ' for col in range(len(grid[0])+2)] for row in range(len(grid)+2)]
     policy = [[' ' for col in range(len(grid[0]))] for row in range(len(grid))]
     wall_grid = [[1 for col in range(len(grid[0]))] for row in range(len(grid))]
-    
-    # also end row
+
+    # surround the grid woth walls
     start_row = [1 for col in range(len(grid[0]) + 2)]
     wall_grid = [start_row]
     for row in grid:
         row.insert(0,1)
         row.append(1)
         wall_grid.append(row)
+    # also end row
     wall_grid.append(start_row)
-
 
     # we gonna need'em
     delta = [[-1, 0 ], # go up
@@ -68,28 +68,28 @@ def stochastic_value(grid,goal,cost_step,collision_cost,success_prob):
     goal_x = goal[0] + 1
     goal_y = goal[1] + 1
 
+    # modify goal position's values
     wall_value[goal_x][goal_y] = 0
     wall_policy[goal_x][goal_y] = '*'
     wall_grid[goal_x][goal_y] = 1
 
-    for i in range(100):
-            
+    for k in range(100):
         for i in range(len(wall_grid)):
             for j in range(len(wall_grid[0])):
                 if wall_grid[i][j] == 0:
                     # for each moving direction
                     for head in range(len(delta)):
                         side_prob = (1 - success_prob)/2
-                        # if it is success
+                        # if it is success, head is not modified
                         new_x = i + delta[head][0]
                         new_y = j + delta[head][1]
                         new_val = success_prob * wall_value[new_x][new_y]
-                        # if it goes to one side
-                        new_head = (head - 1) % len(delta) 
+                        # if it goes to one side -1 to head
+                        new_head = (head - 1) % len(delta)
                         new_x = i + delta[new_head][0]
                         new_y = j + delta[new_head][1]
                         new_val += side_prob * wall_value[new_x][new_y]
-                        # if it goes to the other side
+                        # if it goes to the other side +1 to head
                         new_head = (head + 1) % len(delta)
                         new_x = i + delta[new_head][0]
                         new_y = j + delta[new_head][1]
@@ -140,8 +140,8 @@ for row in policy:
 # Expected outputs:
 #
 #[471.9397246855924, 274.85364957758316, 161.5599867065471, 0],
-#[334.05159958720344, 230.9574434590965, 183.69314862430264, 176.69517762501977], 
-#[398.3517867450282, 277.5898270101976, 246.09263437756917, 335.3944132514738], 
+#[334.05159958720344, 230.9574434590965, 183.69314862430264, 176.69517762501977],
+#[398.3517867450282, 277.5898270101976, 246.09263437756917, 335.3944132514738],
 #[700.1758933725141, 1000, 1000, 668.697206625737]
 
 
