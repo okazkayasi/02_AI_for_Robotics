@@ -1,0 +1,8 @@
+1. (1) Td = 0
+   (2) No problem
+   (3) Ti = 0
+   (4) Tp = 0
+
+2. Presented in Question2.py
+3. Presented in Question3.py
+4. Presented in Question4.py
