@@ -143,7 +143,6 @@ def twiddle(tol=0.2):
     dp = [1.0, 1.0, 1.0]
     robot = make_robot()
     x_trajectory, y_trajectory, best_err = run(robot, p)
-    # TODO: twiddle loop here
     while sum(dp) > tol:
         for i in range(len(p)):
             p[i] += dp[i]
