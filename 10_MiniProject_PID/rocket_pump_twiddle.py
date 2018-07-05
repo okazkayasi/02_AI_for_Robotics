@@ -125,4 +125,3 @@ def rocket_pid_solution(delta_t, current_velocity, optimal_velocity, data):
     # TODO: implement PID Solution here
 
     return throttle, data
-

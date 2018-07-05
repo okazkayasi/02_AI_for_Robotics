@@ -2,9 +2,9 @@
 pressure_tau_p = 0.729
 pressure_tau_d = 1.458
 
-rocket_tau_p = 0.
-rocket_tau_i = 0.
-rocket_tau_d = 0.
+rocket_tau_p = 4.
+rocket_tau_i = 0.5
+rocket_tau_d = 1.
 
 
 def pressure_pd_solution(delta_t, current_pressure, data, n = 300):
@@ -16,19 +16,6 @@ def pressure_pd_solution(delta_t, current_pressure, data, n = 300):
         data (dict): Data passed through out run.  Additional data can be added and existing values modified.
             'ErrorP': Proportional error.  Initialized to 0.0
             'ErrorD': Derivative error.  Initialized to 0.0
-    def run(robot, tau_p, tau_d, n=100, speed=1.0):
-        x_trajectory = []
-        y_trajectory = []
-        last = robot.y
-        for i in range(n):
-            diff = robot.y - last
-            steering = -tau_p * robot.y - tau_d * diff
-            last = robot.y
-            robot.move(steering, speed)
-            x_trajectory.append(robot.x)
-            y_trajectory.append(robot.y)
-            print robot, steering
-        return x_trajectory, y_trajectory
     """
     if (data['ErrorP'] == 0 and data['ErrorD']== 0):
         diff = 0
@@ -58,10 +45,24 @@ def rocket_pid_solution(delta_t, current_velocity, optimal_velocity, data):
     Returns:
         Throttle to set, data dictionary to be passed through run.
     """
-
-    # TODO: remove naive solution
-    throttle = optimal_velocity - current_velocity
-
-    # TODO: implement PID Solution here
+    a = data
+    if data['ErrorP'] == 0 and data['ErrorI'] == 0 and data['ErrorD'] == 0:
+        diff = 0
+        data['ErrorP'] = current_velocity - optimal_velocity 
+        throttle = -rocket_tau_p * data['ErrorP'] - rocket_tau_d * diff - rocket_tau_i * data['ErrorI']
+        data['ErrorI'] += data['ErrorP']
+        data['ErrorD'] = current_velocity
+        data['ExOpt'] = optimal_velocity
+    else:
+        diff = current_velocity - data['ErrorD']
+        data['ErrorP'] = current_velocity - optimal_velocity
+        data['ErrorI'] += data['ErrorP']
+        throttle = -rocket_tau_p * data['ErrorP'] - rocket_tau_d * diff - rocket_tau_i * data['ErrorI']
+        data['ErrorD'] = current_velocity
+        if optimal_velocity != data['ExOpt']:
+            data['ErrorI'] = 0
+            data['ErrorD'] = current_velocity
+        data['ExOpt'] = optimal_velocity
+    
 
     return throttle, data
