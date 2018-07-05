@@ -1,6 +1,6 @@
 # Optimize your PID parameters here:
-pressure_tau_p = 1
-pressure_tau_d = 0
+pressure_tau_p = 0.1
+pressure_tau_d = 0.5
 
 rocket_tau_p = 0.
 rocket_tau_i = 0.
