@@ -198,7 +198,7 @@ class RocketPID:
 
         delta_t = self.time_final / (self.time_steps - 1)  # deltaT is 1 if time + 1 = time_step
         time = np.linspace(0, self.time_final, self.time_steps)
-        p = [4, 0.5, 1]
+
         throttle_set = np.zeros(self.time_steps)
         velocity_log = np.zeros(self.time_steps)
         optimal_velocity_log = np.zeros(self.time_steps)
@@ -224,7 +224,7 @@ class RocketPID:
             elif height[instance] < 3:
                 optimal_velocity = -0.1
 
-            init_throttle, data = rocket_pid_solution(p, velocity_log[instance], optimal_velocity, data)
+            init_throttle, data = rocket_pid_solution(delta_t, velocity_log[instance], optimal_velocity, data)
             init_throttle = max(0, min(1, init_throttle))
 
             rho = 1225000000 * np.exp(-height[instance] / 1000)  # simulate air density drop with altitude
