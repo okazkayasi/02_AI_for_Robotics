@@ -203,24 +203,24 @@ class DeliveryPlanner:
             self.warehouse.append(listed)
         # also end row
         self.warehouse.append(start_row)
-
+        print self.warehouse
         # set all values to 999
-        self.value = [9999999 for col in range(len(self.warehouse[0])) for row in range(len(self.warehouse))]
+        self.value = [[9999999 for col in range(len(self.warehouse[0]))] for row in range(len(self.warehouse))]
 
         # set visited 
-        self.visited = [False for col in range(len(self.warehouse[0])) for row in range(len(self.warehouse))]
+        self.visited = [[False for col in range(len(self.warehouse[0]))] for row in range(len(self.warehouse))]
 
-        self.parent = [9 for col in range(len(self.warehouse[0])) for row in range(len(self.warehouse))]
+        self.parent = [[9 for col in range(len(self.warehouse[0]))] for row in range(len(self.warehouse))]
 
-        self.drop_g_score = self.g_score_calc(self.drop_loc)
+
 
         # robot starts at the drop location
         loc = index_2d(self.warehouse, '@')
         self.robot_loc = [loc[0], loc[1]]
         self.drop_loc = [loc[0], loc[1]]
         self.todo = todo
-
-
+        self.drop_g_score = self.g_score_calc(self.drop_loc)
+        self.plan_delivery()
 
 
     def plan_delivery(self):
@@ -229,11 +229,11 @@ class DeliveryPlanner:
             # extract the next box
             box = self.todo.pop(0)
             # go there
-            moves.extend(pick_the_box(box))
+            moves.extend(self.pick_the_box(box))
             # lift it
             moves.append('lift {}'.format(box))
             # bring back
-            moves.extend(drop_the_box())
+            moves.extend(self.drop_the_box())
             # drop it
             moves.append('down {} {}'.format(self.drop_loc[0], self.drop_loc[1]))
 
@@ -252,25 +252,23 @@ class DeliveryPlanner:
 
     def pick_the_box(self, box):
 
-        box_index = index_2d(box)
+        box_index = index_2d(self.warehouse, box)
         
-        g_score = self.drop_g_score
-        the_way = self.a_star_road(goal= box_index, g_score)
+        g_score = self.g_score_calc(box_index)
+        the_way = self.a_star_road(box_index, g_score)
         return the_way
 
     def drop_the_box(self):
         
         goal = self.drop_loc
-        g_score = g_score_calc(goal)
-        the_way = self.a_star_road(goal = goal, g_score)
+        g_score = self.drop_g_score
+        the_way = self.a_star_road(goal, g_score)
         return the_way
 
     def a_star_road(self, goal, g_scores):
         value = deepcopy(self.value)
         visited = deepcopy(self.visited)
-       
-        value[start[0]][start[1]] = 0
-        visited[start[0]][start[1]] = 1
+        start = self.robot_loc
         
         the_heap = []
         # first node -> f_val, g_val, x, y, parent
@@ -278,38 +276,40 @@ class DeliveryPlanner:
         f_val = g_val
 
         value[start[0]][start[1]] = f_val
-        visited[start[0]][start[1]] = True
 
-        first_node = (f_score, g_val, start[0], start[1], -1)
+        first_node = (f_val, g_val, start[0], start[1], -1)
         heappush(the_heap, first_node)
-        cur_node = [-1, -1]
-        while len(the_heap) > 0 and cur_node != goal:
+        cur_loc = [-1, -1]
+        while len(the_heap) > 0 and cur_loc != goal:
             cur_node = heappop(the_heap)
             x = cur_node[2]
             y = cur_node[3]
+            cur_loc = (x, y)
             visited[x][y] = True
-            for i in range(len(self.pos_moves)):
+            for i in range(len(self.pos_moves)):               
                 move_x = x + self.pos_moves[i][0]
-                move_y = y = self.pos_moves[i][1]
-                if visited[move_x][move_y] == False:
-                    g_val = g_scores[move_x][move_y]
-                    # get the distance of old node
-                    ex_dist = cur_node[0] - cur_node[1] 
-                    new_dist = ex_dist
-                    if self.pos_moves[i][0] == 0 or self.pos_moves[i][1] == 0:
-                        new_dist = ex_dist + 2
-                    else:
-                        new_dist = ex_dist + 3
-                    f_val = new_dist + g_val
-                    parent = (i+4) % 8
-                    new_node = (f_val, g_val, move_x, move_y, parent)
-                    
-                    if f_val < value[move_x][move_y]:
-                        heappush(the_heap, new_node)     
-              
+                move_y = y + self.pos_moves[i][1]
+                if move_x > 0 and move_y > 0 and move_x < len(self.warehouse)-1 and move_y < len(self.warehouse[0])-1:
+                    if visited[move_x][move_y] == False and self.warehouse[move_x][move_y] != '@':
+                        g_val = g_scores[move_x][move_y]
+                        # get the distance of old node
+                        ex_dist = cur_node[0] - cur_node[1] 
+                        new_dist = ex_dist
+                        if self.pos_moves[i][0] == 0 or self.pos_moves[i][1] == 0:
+                            new_dist = ex_dist + 2
+                        else:
+                            new_dist = ex_dist + 3
+                        f_val = new_dist + g_val
+                        parent = (i+4) % 8
+                        new_node = (f_val, g_val, move_x, move_y, parent)
+                        
+                        if f_val < value[move_x][move_y]:
+                            heappush(the_heap, new_node)     
+                
     # this function ret,urns t0he score for a_,,star
-    def g_score_calc(goal):
-        g_scores = [1000 for col in range(len(self.warehouse[0])) for row in range(len(self.warehouse))]
+    def g_score_calc(self, goal):
+        g_scores = [[1000 for col in range(len(self.warehouse[0]))] for row in range(len(self.warehouse))]
+        print g_scores
 
         for i in range(1, len(self.warehouse[0])-1):
             for j in range(1, len(self.warehouse)-1):
@@ -318,7 +318,8 @@ class DeliveryPlanner:
                 diag = min(ver, yatay)
                 ver -= diag
                 yatay -= diag
-                g_scores[i][j] = 3*diag + 2*ver + 2*yatay
+                score = (3*diag + 2*ver + 2*yatay)
+                g_scores[i][j] = score
 
         return g_scores
 
@@ -329,9 +330,9 @@ def index_2d(myList, v):
 
 
 
-warehouse = ['1#2',
-             '.#.',
-             '..@']
+# warehouse = ['1#2',
+#              '.#.',
+#              '..@']
 
-plan = DeliveryPlanner(warehouse, 2) 
+# plan = DeliveryPlanner(warehouse, [1,2]) 
 
