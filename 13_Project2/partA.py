@@ -203,14 +203,13 @@ class DeliveryPlanner:
             self.warehouse.append(listed)
         # also end row
         self.warehouse.append(start_row)
-        print self.warehouse
         # set all values to 999
         self.value = [[9999999 for col in range(len(self.warehouse[0]))] for row in range(len(self.warehouse))]
 
         # set visited 
         self.visited = [[False for col in range(len(self.warehouse[0]))] for row in range(len(self.warehouse))]
 
-        self.parent = [[9 for col in range(len(self.warehouse[0]))] for row in range(len(self.warehouse))]
+
 
 
 
@@ -220,7 +219,7 @@ class DeliveryPlanner:
         self.drop_loc = [loc[0], loc[1]]
         self.todo = todo
         self.drop_g_score = self.g_score_calc(self.drop_loc)
-        self.plan_delivery()
+       # self.plan_delivery()
 
 
     def plan_delivery(self):
@@ -235,7 +234,7 @@ class DeliveryPlanner:
             # bring back
             moves.extend(self.drop_the_box())
             # drop it
-            moves.append('down {} {}'.format(self.drop_loc[0], self.drop_loc[1]))
+            moves.append('down {} {}'.format(self.drop_loc[0]-1, self.drop_loc[1]-1))
 
 
  
@@ -268,6 +267,7 @@ class DeliveryPlanner:
     def a_star_road(self, goal, g_scores):
         value = deepcopy(self.value)
         visited = deepcopy(self.visited)
+        parents = [[9 for col in range(len(self.warehouse[0]))] for row in range(len(self.warehouse))]
         start = self.robot_loc
         
         the_heap = []
@@ -290,7 +290,7 @@ class DeliveryPlanner:
                 move_x = x + self.pos_moves[i][0]
                 move_y = y + self.pos_moves[i][1]
                 if move_x > 0 and move_y > 0 and move_x < len(self.warehouse)-1 and move_y < len(self.warehouse[0])-1:
-                    if visited[move_x][move_y] == False and self.warehouse[move_x][move_y] != '@':
+                    if visited[move_x][move_y] == False and self.warehouse[move_x][move_y] != '#':
                         g_val = g_scores[move_x][move_y]
                         # get the distance of old node
                         ex_dist = cur_node[0] - cur_node[1] 
@@ -304,15 +304,39 @@ class DeliveryPlanner:
                         new_node = (f_val, g_val, move_x, move_y, parent)
                         
                         if f_val < value[move_x][move_y]:
-                            heappush(the_heap, new_node)     
-                
+                            heappush(the_heap, new_node)
+                            parents[move_x][move_y] = parent
+                            value[move_x][move_y] = f_val
+        # write the route 
+        route_at = list(goal)
+        # last step is not needed
+        goal_parent = parents[goal[0]][goal[1]]
+        route_at[0] = goal[0] + self.pos_moves[goal_parent][0]
+        route_at[1] = goal[1] + self.pos_moves[goal_parent][1]
+        first = self.robot_loc[:]
+        self.robot_loc = route_at[:]
+        return_list = []
+        # pick it up from this location
+        while route_at != first:
+            real_route = [i-1 for i in route_at]
+            road_back = "move {} {}".format(real_route[0], real_route[1])
+            parent = parents[route_at[0]][route_at[1]]
+            route_at[0] = route_at[0] + self.pos_moves[parent][0]
+            route_at[1] = route_at[1] + self.pos_moves[parent][1]
+            
+            return_list.insert(0, road_back)
+            
+        return return_list
+
+
+
+
     # this function ret,urns t0he score for a_,,star
     def g_score_calc(self, goal):
         g_scores = [[1000 for col in range(len(self.warehouse[0]))] for row in range(len(self.warehouse))]
-        print g_scores
 
-        for i in range(1, len(self.warehouse[0])-1):
-            for j in range(1, len(self.warehouse)-1):
+        for i in range(1, len(self.warehouse)-1):
+            for j in range(1, len(self.warehouse[0])-1):
                 ver = abs(goal[0] - i)
                 yatay = abs(goal[1] -j)
                 diag = min(ver, yatay)
