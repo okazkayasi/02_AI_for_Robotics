@@ -123,21 +123,215 @@
 # - Ask any questions about the directions or specifications on Piazza.
 #
 
+#  W A R E H O U S E
+# m strings with n character
+# m by n matrix
+# . -> robot may enter from anywhere
+# # -> wall
+# @ -> dropzone. may be entered
+''' [0-9a-zA-Z] -> a box. may not be traversed.
+    if the robot is adjacent to the box, the robot
+    can pick it up. Once removed it is '.'
+    Corner is adjacent too.
+'''
+# todo -> delivery sequence
+# robot may move horizontally and vertically for 2 cost
+# robot may move diagonally for 3 cost
+# cost to pick up is 4
+# put back a box for 2 cost. it may drop it to adjacent
+# if box is placed at @ it is removed from map
+''' return a list of moves to minimize the total cost
+    each move is a string
+    'move {i} {j}' -> row col
+    lift {x} -> x is box's number
+    down {i} {j}
+'''    
+#  W A R E H O U S E
+# m strings with n character
+# m by n matrix
+# . -> robot may enter from anywhere
+# # -> wall
+# @ -> dropzone. may be entered
+''' [0-9a-zA-Z] -> a box. may not be traversed.
+    if the robot is adjacent to the box, the robot
+    can pick it up. Once removed it is '.'
+    Corner is adjacent too.
+'''
+# todo -> delivery sequence
+# robot may move horizontally and vertically for 2 cost
+# robot may move diagonally for 3 cost
+# cost to pick up is 4
+# put back a box for 2 cost. it may drop it to adjacent
+# if box is placed at @ it is removed from map
+''' return a list of moves to minimize the total cost
+    each move is a string
+    'move {i} {j}' -> row col
+    lift {x} -> x is box's number
+    down {i} {j}
+'''    
+
+from heapq import heappush, heappop 
+from copy import deepcopy
 
 class DeliveryPlanner:
-
+    robot_loc = [0,0]
+    drop_loc = [0,0]
+    carrying = False
+    warehouse = []
+    todo = []
+    value = []
+    visited = []
+    parent = []
+    pos_moves = [[-1,-1],
+                 [-1, 0],
+                 [-1,1],
+                 [0,1],
+                 [1,1],
+                 [1,0],
+                 [1,-1],
+                 [0,-1]]
+    drop_g_score = []
+    
     def __init__(self, warehouse, todo):
-        pass
+        # add walls around warehouse
+        start_row = ['#' for chars in range(len(warehouse[0])+2)]
+        self.warehouse = [start_row]
+        for line in warehouse:
+            listed = list(line)
+            listed.insert(0, '#')
+            listed.append('#')
+            self.warehouse.append(listed)
+        # also end row
+        self.warehouse.append(start_row)
+
+        # set all values to 999
+        self.value = [9999999 for col in range(len(self.warehouse[0])) for row in range(len(self.warehouse))]
+
+        # set visited 
+        self.visited = [False for col in range(len(self.warehouse[0])) for row in range(len(self.warehouse))]
+
+        self.parent = [9 for col in range(len(self.warehouse[0])) for row in range(len(self.warehouse))]
+
+        self.drop_g_score = self.g_score_calc(self.drop_loc)
+
+        # robot starts at the drop location
+        loc = index_2d(self.warehouse, '@')
+        self.robot_loc = [loc[0], loc[1]]
+        self.drop_loc = [loc[0], loc[1]]
+        self.todo = todo
+
+
+
 
     def plan_delivery(self):
+        moves = []
+        while len(self.todo) > 0:
+            # extract the next box
+            box = self.todo.pop(0)
+            # go there
+            moves.extend(pick_the_box(box))
+            # lift it
+            moves.append('lift {}'.format(box))
+            # bring back
+            moves.extend(drop_the_box())
+            # drop it
+            moves.append('down {} {}'.format(self.drop_loc[0], self.drop_loc[1]))
 
-        moves = ['move 2 1',
-                 'move 1 0',
-                 'lift 1',
-                 'move 2 1',
-                 'down 2 2',
-                 'move 1 2',
-                 'lift 2',
-                 'down 2 2']
+
+ 
+ #'''       moves = ['move 2 1',
+ #                'move 1 0',
+ #                'lift 1',
+ #                'move 2 1
+ #                'down 2 2',
+ #                'move 1 2',
+ #                'lift 2',
+ #                'down 2 2'] '''
 
         return moves
+
+    def pick_the_box(self, box):
+
+        box_index = index_2d(box)
+        
+        g_score = self.drop_g_score
+        the_way = self.a_star_road(goal= box_index, g_score)
+        return the_way
+
+    def drop_the_box(self):
+        
+        goal = self.drop_loc
+        g_score = g_score_calc(goal)
+        the_way = self.a_star_road(goal = goal, g_score)
+        return the_way
+
+    def a_star_road(self, goal, g_scores):
+        value = deepcopy(self.value)
+        visited = deepcopy(self.visited)
+       
+        value[start[0]][start[1]] = 0
+        visited[start[0]][start[1]] = 1
+        
+        the_heap = []
+        # first node -> f_val, g_val, x, y, parent
+        g_val = g_scores[start[0]][start[1]]
+        f_val = g_val
+
+        value[start[0]][start[1]] = f_val
+        visited[start[0]][start[1]] = True
+
+        first_node = (f_score, g_val, start[0], start[1], -1)
+        heappush(the_heap, first_node)
+        cur_node = [-1, -1]
+        while len(the_heap) > 0 and cur_node != goal:
+            cur_node = heappop(the_heap)
+            x = cur_node[2]
+            y = cur_node[3]
+            visited[x][y] = True
+            for i in range(len(self.pos_moves)):
+                move_x = x + self.pos_moves[i][0]
+                move_y = y = self.pos_moves[i][1]
+                if visited[move_x][move_y] == False:
+                    g_val = g_scores[move_x][move_y]
+                    # get the distance of old node
+                    ex_dist = cur_node[0] - cur_node[1] 
+                    new_dist = ex_dist
+                    if self.pos_moves[i][0] == 0 or self.pos_moves[i][1] == 0:
+                        new_dist = ex_dist + 2
+                    else:
+                        new_dist = ex_dist + 3
+                    f_val = new_dist + g_val
+                    parent = (i+4) % 8
+                    new_node = (f_val, g_val, move_x, move_y, parent)
+                    
+                    if f_val < value[move_x][move_y]:
+                        heappush(the_heap, new_node)     
+              
+    # this function ret,urns t0he score for a_,,star
+    def g_score_calc(goal):
+        g_scores = [1000 for col in range(len(self.warehouse[0])) for row in range(len(self.warehouse))]
+
+        for i in range(1, len(self.warehouse[0])-1):
+            for j in range(1, len(self.warehouse)-1):
+                ver = abs(goal[0] - i)
+                yatay = abs(goal[1] -j)
+                diag = min(ver, yatay)
+                ver -= diag
+                yatay -= diag
+                g_scores[i][j] = 3*diag + 2*ver + 2*yatay
+
+        return g_scores
+
+def index_2d(myList, v):
+    for i, x in enumerate(myList):
+        if v in x:
+            return (i, x.index(v))
+
+
+
+warehouse = ['1#2',
+             '.#.',
+             '..@']
+
+plan = DeliveryPlanner(warehouse, 2) 
+
