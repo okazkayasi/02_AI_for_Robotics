@@ -4,16 +4,16 @@
 # In this problem, you will build a planner that helps a robot
 #   find the best path through a warehouse filled with boxes
 #   that it has to pick up and deliver to a dropzone.
-# 
+#
 # Your file must be called `partA.py` and must have a class
 #   called `DeliveryPlanner`.
-# This class must have an `__init__` function that takes three 
+# This class must have an `__init__` function that takes three
 #   arguments: `self`, `warehouse`, and `todo`.
-# The class must also have a function called `plan_delivery` that 
+# The class must also have a function called `plan_delivery` that
 #   takes a single argument, `self`.
 #
 # === Input Specifications ===
-# 
+#
 # `warehouse` will be a list of m strings, each with n characters,
 #   corresponding to the layout of the warehouse. The warehouse is an
 #   m x n grid. warehouse[i][j] corresponds to the spot in the ith row
@@ -26,12 +26,12 @@
 # '#' (hash) : a wall. The robot cannot enter this space.
 # '@' (dropzone): the starting point for the robot and the space where all boxes must be delivered.
 #   The dropzone may be traversed like a '.' space.
-# [0-9a-zA-Z] (any alphanumeric character) : a box. At most one of each alphanumeric character 
+# [0-9a-zA-Z] (any alphanumeric character) : a box. At most one of each alphanumeric character
 #   will be present in the warehouse (meaning there will be at most 62 boxes). A box may not
 #   be traversed, but if the robot is adjacent to the box, the robot can pick up the box.
 #   Once the box has been removed, the space functions as a '.' space.
-# 
-# For example, 
+#
+# For example,
 #   warehouse = ['1#2',
 #                '.#.',
 #                '..@']
@@ -42,8 +42,8 @@
 #   - There are walls in the warehouse cells in row 0, column 1 and row 1, column 1.
 #   - The remaining five warehouse cells contain empty space.
 #
-# The argument `todo` is a list of alphanumeric characters giving the order in which the 
-#   boxes must be delivered to the dropzone. For example, if 
+# The argument `todo` is a list of alphanumeric characters giving the order in which the
+#   boxes must be delivered to the dropzone. For example, if
 #   todo = ['1','2']
 #   is given with the above example `warehouse`, then the robot must first deliver box '1'
 #   to the dropzone, and then the robot must deliver box '2' to the dropzone.
@@ -62,10 +62,10 @@
 #   of 2 (regardless of the direction in which the robot puts down the box).
 # - If a box is placed on the '@' space, it is considered delivered and is removed from the ware-
 #   house.
-# - The warehouse will be arranged so that it is always possible for the robot to move to the 
+# - The warehouse will be arranged so that it is always possible for the robot to move to the
 #   next box on the todo list without having to rearrange any other boxes.
 #
-# An illegal move will incur a cost of 100, and the robot will not move (the standard costs for a 
+# An illegal move will incur a cost of 100, and the robot will not move (the standard costs for a
 #   move will not be additionally incurred). Illegal moves include:
 # - attempting to move to a nonadjacent, nonexistent, or occupied space
 # - attempting to pick up a nonadjacent or nonexistent box
@@ -81,10 +81,10 @@
 #
 # 'move {i} {j}', where '{i}' is replaced by the row-coordinate of the space the robot moves
 #   to and '{j}' is replaced by the column-coordinate of the space the robot moves to
-# 
+#
 # 'lift {x}', where '{x}' is replaced by the alphanumeric character of the box being picked up
 #
-# 'down {i} {j}', where '{i}' is replaced by the row-coordinate of the space the robot puts 
+# 'down {i} {j}', where '{i}' is replaced by the row-coordinate of the space the robot puts
 #   the box, and '{j}' is replaced by the column-coordinate of the space the robot puts the box
 #
 # For example, for the values of `warehouse` and `todo` given previously (reproduced below):
@@ -103,11 +103,11 @@
 #    'down 2 2']
 #
 # === Grading ===
-# 
+#
 # - Your planner will be graded against a set of test cases, each equally weighted.
-# - If your planner returns a list of moves of total cost that is K times the minimum cost of 
+# - If your planner returns a list of moves of total cost that is K times the minimum cost of
 #   successfully completing the task, you will receive 1/K of the credit for that test case.
-# - Otherwise, you will receive no credit for that test case. This could happen for one of several 
+# - Otherwise, you will receive no credit for that test case. This could happen for one of several
 #   reasons including (but not necessarily limited to):
 #   - plan_delivery's moves do not deliver the boxes in the correct order.
 #   - plan_delivery's output is not a list of strings in the prescribed format.
@@ -115,9 +115,9 @@
 #   - Your code raises an exception.
 #
 # === Additional Info ===
-# 
+#
 # - You may add additional classes and functions as needed provided they are all in the file `partA.py`.
-# - Upload partA.py to Project 2 on T-Square in the Assignments section. Do not put it into an 
+# - Upload partA.py to Project 2 on T-Square in the Assignments section. Do not put it into an
 #   archive with other files.
 # - Your partA.py file must not execute any code when imported.
 # - Ask any questions about the directions or specifications on Piazza.
@@ -145,7 +145,7 @@
     'move {i} {j}' -> row col
     lift {x} -> x is box's number
     down {i} {j}
-'''    
+'''
 #  W A R E H O U S E
 # m strings with n character
 # m by n matrix
@@ -168,9 +168,9 @@
     'move {i} {j}' -> row col
     lift {x} -> x is box's number
     down {i} {j}
-'''    
+'''
 
-from heapq import heappush, heappop 
+from heapq import heappush, heappop
 from copy import deepcopy
 
 class DeliveryPlanner:
@@ -191,7 +191,7 @@ class DeliveryPlanner:
                  [1,-1],
                  [0,-1]]
     drop_g_score = []
-    
+
     def __init__(self, warehouse, todo):
         # add walls around warehouse
         start_row = ['#' for chars in range(len(warehouse[0])+2)]
@@ -206,7 +206,7 @@ class DeliveryPlanner:
         # set all values to 999
         self.value = [[9999999 for col in range(len(self.warehouse[0]))] for row in range(len(self.warehouse))]
 
-        # set visited 
+        # set visited
         self.visited = [[False for col in range(len(self.warehouse[0]))] for row in range(len(self.warehouse))]
 
 
@@ -224,6 +224,8 @@ class DeliveryPlanner:
 
     def plan_delivery(self):
         moves = []
+        print self.todo
+
         while len(self.todo) > 0:
             # extract the next box
             box = self.todo.pop(0)
@@ -237,7 +239,7 @@ class DeliveryPlanner:
             moves.append('down {} {}'.format(self.drop_loc[0]-1, self.drop_loc[1]-1))
 
 
- 
+
  #'''       moves = ['move 2 1',
  #                'move 1 0',
  #                'lift 1',
@@ -246,30 +248,64 @@ class DeliveryPlanner:
  #                'move 1 2',
  #                'lift 2',
  #                'down 2 2'] '''
-
+        for i in moves:
+            print i
         return moves
 
-    def pick_the_box(self, box):
+
+    def pick_the_box(self, box, step=False):
 
         box_index = index_2d(self.warehouse, box)
-        
+
         g_score = self.g_score_calc(box_index)
         the_way = self.a_star_road(box_index, g_score)
+        if not step:
+            self.warehouse[box_index[0]][box_index[1]] = '.'
         return the_way
 
     def drop_the_box(self):
-        
+
         goal = self.drop_loc
         g_score = self.drop_g_score
-        the_way = self.a_star_road(goal, g_score)
+        if self.robot_loc == self.drop_loc:
+            the_way = self.step_aside()
+        else:
+            the_way = self.a_star_road(goal, g_score)
         return the_way
+
+    def step_aside(self):
+        x = self.robot_loc[0]
+        y = self.robot_loc[1]
+
+        if len(self.todo) > 0:
+            other_box = self.pick_the_box(self.todo[0], step=True)
+            self.robot_loc = [2, 1]
+            return other_box[:1]   
+             
+        for i in range(len(self.pos_moves)):
+            move_x = x + self.pos_moves[i][0]
+            move_y = y + self.pos_moves[i][1]
+            print move_x
+            print move_y
+            for ware in self.warehouse:
+                print ware
+            # it should be an empty place
+
+            else:
+                if move_x > 0 and move_y > 0 and move_x < len(self.warehouse)-1 and move_y < len(self.warehouse[0])-1:
+                    if self.warehouse[move_x][move_y] == '.':
+                        x = move_x - 1
+                        y = move_y - 1
+                        self.robot_loc = [move_x,move_y]
+                        return ['move {} {}'.format(x,y)]
+
 
     def a_star_road(self, goal, g_scores):
         value = deepcopy(self.value)
         visited = deepcopy(self.visited)
         parents = [[9 for col in range(len(self.warehouse[0]))] for row in range(len(self.warehouse))]
         start = self.robot_loc
-        
+
         the_heap = []
         # first node -> f_val, g_val, x, y, parent
         g_val = g_scores[start[0]][start[1]]
@@ -286,28 +322,33 @@ class DeliveryPlanner:
             y = cur_node[3]
             cur_loc = (x, y)
             visited[x][y] = True
-            for i in range(len(self.pos_moves)):               
+            for i in range(len(self.pos_moves)):
                 move_x = x + self.pos_moves[i][0]
                 move_y = y + self.pos_moves[i][1]
                 if move_x > 0 and move_y > 0 and move_x < len(self.warehouse)-1 and move_y < len(self.warehouse[0])-1:
-                    if visited[move_x][move_y] == False and self.warehouse[move_x][move_y] != '#':
-                        g_val = g_scores[move_x][move_y]
-                        # get the distance of old node
-                        ex_dist = cur_node[0] - cur_node[1] 
-                        new_dist = ex_dist
-                        if self.pos_moves[i][0] == 0 or self.pos_moves[i][1] == 0:
-                            new_dist = ex_dist + 2
-                        else:
-                            new_dist = ex_dist + 3
-                        f_val = new_dist + g_val
-                        parent = (i+4) % 8
-                        new_node = (f_val, g_val, move_x, move_y, parent)
-                        
-                        if f_val < value[move_x][move_y]:
-                            heappush(the_heap, new_node)
-                            parents[move_x][move_y] = parent
-                            value[move_x][move_y] = f_val
-        # write the route 
+                    is_goal = goal[0] == move_x or goal[1] == move_y
+                    movable = self.warehouse[move_x][move_y] == '.' or self.warehouse[move_x][move_y] == '@'
+                    is_move = movable or is_goal
+
+                    if is_move:
+                        if visited[move_x][move_y] == False and self.warehouse[move_x][move_y] != '#':
+                            g_val = g_scores[move_x][move_y]
+                            # get the distance of old node
+                            ex_dist = cur_node[0] - cur_node[1]
+                            new_dist = ex_dist
+                            if self.pos_moves[i][0] == 0 or self.pos_moves[i][1] == 0:
+                                new_dist = ex_dist + 2
+                            else:
+                                new_dist = ex_dist + 3
+                            f_val = new_dist + g_val
+                            parent = (i+4) % 8
+                            new_node = (f_val, g_val, move_x, move_y, parent)
+
+                            if f_val < value[move_x][move_y]:
+                                heappush(the_heap, new_node)
+                                parents[move_x][move_y] = parent
+                                value[move_x][move_y] = f_val
+        # write the route
         route_at = list(goal)
         # last step is not needed
         goal_parent = parents[goal[0]][goal[1]]
@@ -316,16 +357,20 @@ class DeliveryPlanner:
         first = self.robot_loc[:]
         self.robot_loc = route_at[:]
         return_list = []
+
+
+
         # pick it up from this location
+
         while route_at != first:
             real_route = [i-1 for i in route_at]
             road_back = "move {} {}".format(real_route[0], real_route[1])
             parent = parents[route_at[0]][route_at[1]]
             route_at[0] = route_at[0] + self.pos_moves[parent][0]
             route_at[1] = route_at[1] + self.pos_moves[parent][1]
-            
+
             return_list.insert(0, road_back)
-            
+
         return return_list
 
 
@@ -358,5 +403,4 @@ def index_2d(myList, v):
 #              '.#.',
 #              '..@']
 
-# plan = DeliveryPlanner(warehouse, [1,2]) 
-
+# plan = DeliveryPlanner(warehouse, [1,2])
