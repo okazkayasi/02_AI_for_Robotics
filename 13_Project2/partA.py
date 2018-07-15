@@ -279,9 +279,15 @@ class DeliveryPlanner:
 
         if len(self.todo) > 0:
             other_box = self.pick_the_box(self.todo[0], step=True)
-            self.robot_loc = [2, 1]
-            return other_box[:1]   
-             
+            
+            if len(other_box) == 0:
+                return self.just_move(x, y)
+            else:
+                return other_box[:1]   
+
+        return self.just_move(x, y)
+
+    def just_move(self, x, y):     
         for i in range(len(self.pos_moves)):
             move_x = x + self.pos_moves[i][0]
             move_y = y + self.pos_moves[i][1]
