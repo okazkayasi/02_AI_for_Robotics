@@ -550,6 +550,21 @@ class PartATestCase(unittest.TestCase):
         score = self.run_test_with_params(params)
         print 'credit: {}'.format(score)
 
+
+    # Test Case 11
+    @timeout(TIME_LIMIT)
+    def test_case11(self):
+        params = {
+            'test_case': 11,
+            'warehouse': ['1#2',
+                        '#@#',
+                        '3#4'],
+            'todo': ['1','2','3','4'],
+            'min_cost': 45.0
+        }
+        score = self.run_test_with_params(params)
+        print 'credit: {}'.format(score)
+
 #Only run all of the test automatically if this file was executed from the command line. Otherwise, let Nose/py.test do it's own thing with the test cases.
 if __name__ == "__main__":
     all_suites = map(lambda x: unittest.TestLoader().loadTestsFromTestCase(x), [PartATestCase])
