@@ -565,9 +565,9 @@ def slam(data, N, num_landmarks, motion_noise, measurement_noise):
 
 def online_slam(data, N, num_landmarks, motion_noise, measurement_noise):
     #
-    #
-    # Enter your code here!
-    #
+    
+
+    
     #
     return mu, Omega # make sure you return both of these matrices to be marked correct.
 

@@ -1,19 +1,19 @@
 #
 # === Introduction ===
 #
-# In this problem, you will again build a planner that helps a robot
+#   In this problem, you will again build a planner that helps a robot
 #   find the best path through a warehouse filled with boxes
 #   that it has to pick up and deliver to a dropzone. Unlike Part A,
 #   however, in this problem the robot is moving in a continuous world
 #   (albeit in discrete time steps) and has constraints on the amount
 #   it can turn its wheels in a given time step.
 # 
-# Your file must be called `partB.py` and must have a class
+#   Your file must be called `partB.py` and must have a class
 #   called `DeliveryPlanner`.
-# This class must have an `__init__` function that takes five 
+#   This class must have an `__init__` function that takes five 
 #   arguments: `self`, `warehouse`, `todo`, `max_distance`, and
 #   `max_steering`.
-# The class must also have a function called `plan_delivery` that 
+#   The class must also have a function called `plan_delivery` that 
 #   takes a single argument, `self`.
 #
 # === Input Specifications ===
@@ -125,39 +125,250 @@
 #   archive with other files.
 # - Ask any questions about the directions or specifications on Piazza.
 #
-
+from copy import deepcopy
+from heapq import heappush, heappop
 
 class DeliveryPlanner:
 
+    robot_loc = [0,0]
+    drop_loc = [0,0]
+    carrying = False
+    warehouse = []
+    todo = []
+    value = []
+    visited = []
+    parent = []
+    pos_moves = [[-1,-1],
+                 [-1, 0],
+                 [-1,1],
+                 [0,1],
+                 [1,1],
+                 [1,0],
+                 [1,-1],
+                 [0,-1]]
+    drop_g_score = []
+
+
     def __init__(self, warehouse, todo, max_distance, max_steering):
+        
+        # add walls around warehouse
+        start_row = ['#' for chars in range(len(warehouse[0])+2)]
+        self.warehouse = [start_row]
+        for line in warehouse:
+            listed = list(line)
+            listed.insert(0, '#')
+            listed.append('#')
+            self.warehouse.append(listed)
+        # also end row
+        self.warehouse.append(start_row)
+        # set all values to 999
+        self.value = [[9999999 for col in range(len(self.warehouse[0]))] for row in range(len(self.warehouse))]
 
-        ######################################################################################
-        # TODO: You may use this function for any initialization required for your planner  
-        ######################################################################################
+        # set visited
+        self.visited = [[False for col in range(len(self.warehouse[0]))] for row in range(len(self.warehouse))]
 
-        pass
+        # robot starts at the drop location
+    #     loc = index_2d(self.warehouse, '@')
+    #     self.robot_loc = [loc[0], loc[1]]
+    #     self.drop_loc = [loc[0], loc[1]]
+        self.todo = todo
+    #     self.drop_g_score = self.g_score_calc(self.drop_loc)
+    #    # self.plan_delivery()
 
     def plan_delivery(self):
 
         # Sample of what a moves list should look like - replace with your planner results
 
-        moves = ['move 1.570963 2.0',   # rotate and move north 2 spaces
-                 'move 1.570963 0.1',   # rotate west and move closer to second box
-                 'lift 1',              # lift the second box
-                 'move 0.785398 1.5',   # rotate to sw and move down 1.5 squares
-                 'down 3.5 -4.0',       # set the box out of the way
-                 'move -0.785398 2.0',  # rotate to west and move 2.5 squares
-                 'move -1.570963 2.7',  # rotate to north and move to pick up box 0
-                 'lift 0',              # lift the first box
-                 'move -1.570963 0.0',  # rotate to the south east
-                 'move -0.785398 1.0',  # finish rotation
-                 'move 0.785398 2.5',   # rotate to east and move
-                 'move -1.570963 2.5',  # rotate and move south
-                 'down 4.5 -4.5',       # set down the box in the dropzone
-                 'move -1.570963 0.6',  # rotate to west and move towards box 1
-                 'lift 1',              # lift the second box
-                 'move 1.570963 0.0',   # rotate north
-                 'move 1.570963 0.6',   # rotate east and move back towards dropzone
-                 'down 4.5 -4.5']       # deliver second box
+        moves = []
+        print self.todo
 
+        while len(self.todo) > 0:
+            # extract the next box
+            box_index = self.todo.pop(0)
+            # go there
+            way, nodes = self.pick_the_box(box_index)
+
+            # nodes to turning
+            
+
+            # lift it
+            moves.append('lift {}'.format(box_index))
+
+
+            # bring back
+            way, nodes = self.drop_loc()
+
+
+
+            # drop it
+            moves.append('down {} {}'.format(self.drop_loc[0]-1, self.drop_loc[1]-1))
+        
+        
+        for i in moves:
+            print i
         return moves
+
+
+
+        # moves = ['move 1.570963 2.0',   # rotate and move north 2 spaces
+        #          'move 1.570963 0.1',   # rotate west and move closer to second box
+        #          'lift 1',              # lift the second box
+        #          'move 0.785398 1.5',   # rotate to sw and move down 1.5 squares
+        #          'down 3.5 -4.0',       # set the box out of the way
+        #          'move -0.785398 2.0',  # rotate to west and move 2.5 squares
+        #          'move -1.570963 2.7',  # rotate to north and move to pick up box 0
+        #          'lift 0',              # lift the first box
+        #          'move -1.570963 0.0',  # rotate to the south east
+        #          'move -0.785398 1.0',  # finish rotation
+        #          'move 0.785398 2.5',   # rotate to east and move
+        #          'move -1.570963 2.5',  # rotate and move south
+        #          'down 4.5 -4.5',       # set down the box in the dropzone
+        #          'move -1.570963 0.6',  # rotate to west and move towards box 1
+        #          'lift 1',              # lift the second box
+        #          'move 1.570963 0.0',   # rotate north
+        #          'move 1.570963 0.6',   # rotate east and move back towards dropzone
+        #          'down 4.5 -4.5']       # deliver second box
+
+
+    
+
+    def pick_the_box(self, box_index, step=False):
+    
+        g_score = self.g_score_calc(box_index)
+        the_way, the_nodes = self.a_star_road(box_index, g_score)
+        if not step:
+            self.warehouse[box_index[0]][box_index[1]] = '.'
+        return the_way, the_nodes
+
+    def drop_the_box(self):
+
+        goal = self.drop_loc
+        g_score = self.drop_g_score
+        if self.robot_loc == self.drop_loc:
+            the_way = self.step_aside()
+        else:
+            the_way, the_nodes = self.a_star_road(goal, g_score)
+        return the_way, the_nodes
+
+    def step_aside(self):
+        x = self.robot_loc[0]
+        y = self.robot_loc[1]
+
+        if len(self.todo) > 0:
+            other_box = self.pick_the_box(self.todo[0], step=True)
+            
+            if len(other_box) == 0:
+                return self.just_move(x, y)
+            else:
+                return other_box[:1]   
+
+        return self.just_move(x, y)
+
+    def just_move(self, x, y):     
+        for i in range(len(self.pos_moves)):
+            move_x = x + self.pos_moves[i][0]
+            move_y = y + self.pos_moves[i][1]
+            print move_x
+            print move_y
+            for ware in self.warehouse:
+                print ware
+            # it should be an empty place
+
+            else:
+                if move_x > 0 and move_y > 0 and move_x < len(self.warehouse)-1 and move_y < len(self.warehouse[0])-1:
+                    if self.warehouse[move_x][move_y] == '.':
+                        x = move_x - 1
+                        y = move_y - 1
+                        self.robot_loc = [move_x,move_y]
+                        return ['move {} {}'.format(x,y)]
+
+
+    def a_star_road(self, goal, g_scores):
+        value = deepcopy(self.value)
+        visited = deepcopy(self.visited)
+        parents = [[9 for col in range(len(self.warehouse[0]))] for row in range(len(self.warehouse))]
+        start = self.robot_loc
+
+        the_heap = []
+        # first node -> f_val, g_val, x, y, parent
+        g_val = g_scores[start[0]][start[1]]
+        f_val = g_val
+
+        value[start[0]][start[1]] = f_val
+
+        first_node = (f_val, g_val, start[0], start[1], -1)
+        heappush(the_heap, first_node)
+        cur_loc = [-1, -1]
+        while len(the_heap) > 0 and cur_loc != goal:
+            cur_node = heappop(the_heap)
+            x = cur_node[2]
+            y = cur_node[3]
+            cur_loc = (x, y)
+            visited[x][y] = True
+            for i in range(len(self.pos_moves)):
+                move_x = x + self.pos_moves[i][0]
+                move_y = y + self.pos_moves[i][1]
+                if move_x > 0 and move_y > 0 and move_x < len(self.warehouse)-1 and move_y < len(self.warehouse[0])-1:
+                    is_goal = goal[0] == move_x or goal[1] == move_y
+                    movable = self.warehouse[move_x][move_y] == '.' or self.warehouse[move_x][move_y] == '@'
+                    is_move = movable or is_goal
+
+                    if is_move:
+                        if visited[move_x][move_y] == False and self.warehouse[move_x][move_y] != '#':
+                            g_val = g_scores[move_x][move_y]
+                            # get the distance of old node
+                            ex_dist = cur_node[0] - cur_node[1]
+                            new_dist = ex_dist
+                            if self.pos_moves[i][0] == 0 or self.pos_moves[i][1] == 0:
+                                new_dist = ex_dist + 2
+                            else:
+                                new_dist = ex_dist + 3
+                            f_val = new_dist + g_val
+                            parent = (i+4) % 8
+                            new_node = (f_val, g_val, move_x, move_y, parent)
+
+                            if f_val < value[move_x][move_y]:
+                                heappush(the_heap, new_node)
+                                parents[move_x][move_y] = parent
+                                value[move_x][move_y] = f_val
+        # write the route
+        route_at = list(goal)
+        # last step is not needed
+        goal_parent = parents[goal[0]][goal[1]]
+        route_at[0] = goal[0] + self.pos_moves[goal_parent][0]
+        route_at[1] = goal[1] + self.pos_moves[goal_parent][1]
+        first = self.robot_loc[:]
+        self.robot_loc = route_at[:]
+        return_list = []
+        return_nodes = []
+
+
+
+        # pick it up from this location
+
+        while route_at != first:
+            real_route = [i-1 for i in route_at]
+            road_back = "move {} {}".format(real_route[0], real_route[1])
+            parent = parents[route_at[0]][route_at[1]]
+            route_at[0] = route_at[0] + self.pos_moves[parent][0]
+            route_at[1] = route_at[1] + self.pos_moves[parent][1]
+
+            return_list.insert(0, road_back)
+            return_nodes.insert(0, real_route)
+        return return_list, return_nodes
+
+
+
+
+    # this function ret,urns t0he score for a_,,star
+    def g_score_calc(self, goal):
+        g_scores = [[1000 for col in range(len(self.warehouse[0]))] for row in range(len(self.warehouse))]
+        x = goal[0] + 1
+        y = goal[1] - 1
+        for i in range(1, len(self.warehouse[0])-1):
+            for j in range(1, len(self.warehouse)-1):
+                ver = abs(x - i)
+                yatay = abs(y + j)
+                g_scores[j][i] = (ver**2 + yatay**2)**0.5
+
+        return g_scores

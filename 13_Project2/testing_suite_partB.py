@@ -22,7 +22,7 @@ PI = math.pi
 ########################################################################
 # for debugging set the time limit to a big number
 ########################################################################
-TIME_LIMIT = 10  # seconds
+TIME_LIMIT = 10000  # seconds
 
 
 # The functions curr_time_millis, handler, and timeout are taken from 
