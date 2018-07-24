@@ -1,19 +1,19 @@
 #
 # === Introduction ===
 #
-# In this problem, you will again build a planner that helps a robot
+#   In this problem, you will again build a planner that helps a robot
 #   find the best path through a warehouse filled with boxes
 #   that it has to pick up and deliver to a dropzone. Unlike Part A,
 #   however, in this problem the robot is moving in a continuous world
 #   (albeit in discrete time steps) and has constraints on the amount
 #   it can turn its wheels in a given time step.
 # 
-# Your file must be called `partB.py` and must have a class
+#   Your file must be called `partB.py` and must have a class
 #   called `DeliveryPlanner`.
-# This class must have an `__init__` function that takes five 
+#   This class must have an `__init__` function that takes five 
 #   arguments: `self`, `warehouse`, `todo`, `max_distance`, and
 #   `max_steering`.
-# The class must also have a function called `plan_delivery` that 
+#   The class must also have a function called `plan_delivery` that 
 #   takes a single argument, `self`.
 #
 # === Input Specifications ===
@@ -125,90 +125,90 @@
 #   archive with other files.
 # - Ask any questions about the directions or specifications on Piazza.
 #
-
-import partA
-import copy
-from heapq import heappush, heappop
 from copy import deepcopy
-
-
+from heapq import heappush, heappop
 
 class DeliveryPlanner:
 
+    robot_loc = [0,0]
+    drop_loc = [0,0]
+    carrying = False
     warehouse = []
     todo = []
+    value = []
+    visited = []
+    parent = []
+    pos_moves = [[-1,-1],
+                 [-1, 0],
+                 [-1,1],
+                 [0,1],
+                 [1,1],
+                 [1,0],
+                 [1,-1],
+                 [0,-1]]
+    drop_g_score = []
+
 
     def __init__(self, warehouse, todo, max_distance, max_steering):
-        row_num = len(warehouse[0]) * 2 + 1
-
-        start_row = ['#' for chars in range(row_num) ]
-        the_warehouse = [start_row]
-        for line in warehouse:
-            nl = ['#']
-            listed = list(line)
-            for i in range(len(listed)-1):
-
-                # write the center and the next line
-                if listed[i] != '#':
-                    nl.append('.')
-
-                    if listed[i+1] != '#':
-                        nl.append('.')
-                    else:
-                        nl.append('#')
-                else:
-                    nl.extend(['#', '#'])
-
-            if listed[-1] != '#':
-                nl.append('.')          
-            else:
-                nl.append('#')
-            nl.append('#')
-            the_warehouse.append(nl)
-        the_warehouse.append(start_row)
-
-        # let's add the intermediate rows
-
-        row_num = range(1, len(the_warehouse)-1)
-        last = the_warehouse[:1]
-        for i in row_num:
-            last.append(the_warehouse[i])
-            listed = []
-            for j in range(len(the_warehouse[i])):
-                if the_warehouse[i][j] == '.' and the_warehouse[i+1][j] == '.':
-                    listed.append('.')
-                else:
-                    listed.append('#')
-            last.append(listed)
-
-
-        # add the boxes
-        for i in range(len(todo)):
-            y = int(todo[i][0] * 2)
-            x = int(todo[i][1] * -2)
-            last[x][y] = str(i)
-            self.todo.append(str(i))
-
-        # add the droploc
-        drop_x, drop_y = index_2d(warehouse, '@')
-        drop_x = drop_x*2+1
-        drop_y = drop_y*2+1
-
-        last[int(drop_x)][int(drop_y)] = '@'     
-
-        self.warehouse = last
-
         
+        # add walls around warehouse
+        start_row = ['#' for chars in range(len(warehouse[0])+2)]
+        self.warehouse = [start_row]
+        for line in warehouse:
+            listed = list(line)
+            listed.insert(0, '#')
+            listed.append('#')
+            self.warehouse.append(listed)
+        # also end row
+        self.warehouse.append(start_row)
+        # set all values to 999
+        self.value = [[9999999 for col in range(len(self.warehouse[0]))] for row in range(len(self.warehouse))]
+
+        # set visited
+        self.visited = [[False for col in range(len(self.warehouse[0]))] for row in range(len(self.warehouse))]
+
+        # robot starts at the drop location
+    #     loc = index_2d(self.warehouse, '@')
+    #     self.robot_loc = [loc[0], loc[1]]
+    #     self.drop_loc = [loc[0], loc[1]]
+        self.todo = todo
+    #     self.drop_g_score = self.g_score_calc(self.drop_loc)
+    #    # self.plan_delivery()
 
     def plan_delivery(self):
-        
 
-        student_planner = PartA_DeliveryPlanner(copy.copy(self.warehouse), copy.copy(self.todo))
-        action_list = student_planner.plan_delivery()
-        
-        nodes = self.action_reader(action_list)
+        # Sample of what a moves list should look like - replace with your planner results
 
-        # # Sample of what a moves list should look like - replace with your planner results
+        moves = []
+        print self.todo
+
+        while len(self.todo) > 0:
+            # extract the next box
+            box_index = self.todo.pop(0)
+            # go there
+            way, nodes = self.pick_the_box(box_index)
+
+            # nodes to turning
+            
+
+            # lift it
+            moves.append('lift {}'.format(box_index))
+
+
+            # bring back
+            way, nodes = self.drop_loc()
+
+
+
+            # drop it
+            moves.append('down {} {}'.format(self.drop_loc[0]-1, self.drop_loc[1]-1))
+        
+        
+        for i in moves:
+            print i
+        return moves
+
+
 
         # moves = ['move 1.570963 2.0',   # rotate and move north 2 spaces
         #          'move 1.570963 0.1',   # rotate west and move closer to second box
@@ -229,108 +229,16 @@ class DeliveryPlanner:
         #          'move 1.570963 0.6',   # rotate east and move back towards dropzone
         #          'down 4.5 -4.5']       # deliver second box
 
-        # return moves
 
+    
 
-    def action_reader(self, action_list):
-        
-
-
-def index_2d(myList, v):
-    for i, x in enumerate(myList):
-        if v in x:
-            return (i, x.index(v))
-
-
-class PartA_DeliveryPlanner:
-    robot_loc = [0,0]
-    drop_loc = [0,0]
-    carrying = False
-    warehouse = []
-    todo = []
-    value = []
-    visited = []
-    parent = []
-    pos_moves = [[-1,-1],
-                 [-1, 0],
-                 [-1,1],
-                 [0,1],
-                 [1,1],
-                 [1,0],
-                 [1,-1],
-                 [0,-1]]
-    drop_g_score = []
-
-    def __init__(self, warehouse, todo):
-        # add walls around warehouse
-        start_row = ['#' for chars in range(len(warehouse[0])+2)]
-        self.warehouse = [start_row]
-        for line in warehouse:
-            listed = list(line)
-            listed.insert(0, '#')
-            listed.append('#')
-            self.warehouse.append(listed)
-        # also end row
-        self.warehouse.append(start_row)
-        # set all values to 999
-        self.value = [[9999999 for col in range(len(self.warehouse[0]))] for row in range(len(self.warehouse))]
-
-        # set visited
-        self.visited = [[False for col in range(len(self.warehouse[0]))] for row in range(len(self.warehouse))]
-
-
-
-
-
-        # robot starts at the drop location
-        loc = index_2d(self.warehouse, '@')
-        self.robot_loc = [loc[0], loc[1]]
-        self.drop_loc = [loc[0], loc[1]]
-        self.todo = todo
-        self.drop_g_score = self.g_score_calc(self.drop_loc)
-       # self.plan_delivery()
-
-
-    def plan_delivery(self):
-        moves = []
-        print self.todo
-
-        while len(self.todo) > 0:
-            # extract the next box
-            box = self.todo.pop(0)
-            # go there
-            moves.extend(self.pick_the_box(box))
-            # lift it
-            moves.append('lift {}'.format(box))
-            # bring back
-            moves.extend(self.drop_the_box())
-            # drop it
-            moves.append('down {} {}'.format(self.drop_loc[0]-1, self.drop_loc[1]-1))
-
-
-
- #'''       moves = ['move 2 1',
- #                'move 1 0',
- #                'lift 1',
- #                'move 2 1
- #                'down 2 2',
- #                'move 1 2',
- #                'lift 2',
- #                'down 2 2'] '''
-        for i in moves:
-            print i
-        return moves
-
-
-    def pick_the_box(self, box, step=False):
-
-        box_index = index_2d(self.warehouse, box)
-
+    def pick_the_box(self, box_index, step=False):
+    
         g_score = self.g_score_calc(box_index)
-        the_way = self.a_star_road(box_index, g_score)
+        the_way, the_nodes = self.a_star_road(box_index, g_score)
         if not step:
             self.warehouse[box_index[0]][box_index[1]] = '.'
-        return the_way
+        return the_way, the_nodes
 
     def drop_the_box(self):
 
@@ -339,8 +247,8 @@ class PartA_DeliveryPlanner:
         if self.robot_loc == self.drop_loc:
             the_way = self.step_aside()
         else:
-            the_way = self.a_star_road(goal, g_score)
-        return the_way
+            the_way, the_nodes = self.a_star_road(goal, g_score)
+        return the_way, the_nodes
 
     def step_aside(self):
         x = self.robot_loc[0]
@@ -432,6 +340,7 @@ class PartA_DeliveryPlanner:
         first = self.robot_loc[:]
         self.robot_loc = route_at[:]
         return_list = []
+        return_nodes = []
 
 
 
@@ -445,8 +354,8 @@ class PartA_DeliveryPlanner:
             route_at[1] = route_at[1] + self.pos_moves[parent][1]
 
             return_list.insert(0, road_back)
-
-        return return_list
+            return_nodes.insert(0, real_route)
+        return return_list, return_nodes
 
 
 
@@ -454,16 +363,12 @@ class PartA_DeliveryPlanner:
     # this function ret,urns t0he score for a_,,star
     def g_score_calc(self, goal):
         g_scores = [[1000 for col in range(len(self.warehouse[0]))] for row in range(len(self.warehouse))]
-
-        for i in range(1, len(self.warehouse)-1):
-            for j in range(1, len(self.warehouse[0])-1):
-                ver = abs(goal[0] - i)
-                yatay = abs(goal[1] -j)
-                diag = min(ver, yatay)
-                ver -= diag
-                yatay -= diag
-                score = (3*diag + 2*ver + 2*yatay)
-                g_scores[i][j] = score
+        x = goal[0] + 1
+        y = goal[1] - 1
+        for i in range(1, len(self.warehouse[0])-1):
+            for j in range(1, len(self.warehouse)-1):
+                ver = abs(x - i)
+                yatay = abs(y + j)
+                g_scores[j][i] = (ver**2 + yatay**2)**0.5
 
         return g_scores
-
