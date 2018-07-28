@@ -126,21 +126,31 @@
 # - Ask any questions about the directions or specifications on Piazza.
 #
 
-import partA
+import StringIO
 import copy
 from heapq import heappush, heappop
 from copy import deepcopy
-
+import math
+from math import *
 
 
 class DeliveryPlanner:
 
     warehouse = []
     todo = []
+    droploc = []
+    robotloc = []
+    heading = radians(0)
+    max_distance = 0
+    max_steering = 0
 
     def __init__(self, warehouse, todo, max_distance, max_steering):
-        row_num = len(warehouse[0]) * 2 + 1
+        self.heading = radians(0)
+        self.max_distance = max_distance
+        self.max_steering = max_steering
 
+        row_num = len(warehouse[0]) * 2 + 1
+        
         start_row = ['#' for chars in range(row_num) ]
         the_warehouse = [start_row]
         for line in warehouse:
@@ -195,9 +205,9 @@ class DeliveryPlanner:
         drop_y = drop_y*2+1
 
         last[int(drop_x)][int(drop_y)] = '@'     
-
+        self.droploc = [drop_x, drop_y]
         self.warehouse = last
-
+        self.robotloc = [drop_x, drop_y]
         
 
     def plan_delivery(self):
@@ -207,6 +217,8 @@ class DeliveryPlanner:
         action_list = student_planner.plan_delivery()
         
         nodes = self.action_reader(action_list)
+
+        straight_lines = self.road_maker(nodes)
 
         # # Sample of what a moves list should look like - replace with your planner results
 
@@ -231,9 +243,137 @@ class DeliveryPlanner:
 
         # return moves
 
+    # the point is not to hit walls here
+    def road_maker(self, nodes):
+        # start checking from first to last
+        for road in nodes:
+            # see if it is a list
+            try:
+                road + []
+                lines = self.straighter(road)
+                line_road = self.line_to_road(lines)
+                a = 1+1
+            except TypeError:
+                l = False
+            
+
+    def line_to_road(self, lines):
+        squ = []
+        for line in lines:
+            ##### the turning
+
+            y_diff = line[1][0] - line[0][0]
+            x_diff = line[1][1] - line[0][1]
+            head = self.heading
+            req_head = math.atan2(y_diff, x_diff)
+
+            # calculate the turn
+            diff = 0 
+            if req_head < 0 and head < 0:
+                diff = head - req_head
+            elif req_head < 0 and head > 0:
+                diff = head - req_head
+                if diff > math.pi:
+                    diff = -math.pi*2 + diff
+            elif req_head > 0 and head < 0:
+                diff = head - req_head
+                if diff < - math.pi:
+                    diff = math.pi*2 + diff
+            else: # both positive
+                diff = head - req_head
+
+            robot_y = self.robotloc[0]
+            robot_x = self.robotloc[1]
+
+            while abs(diff) > self.max_steering:
+                if diff < 0:
+                    move = 'move {} {}'.format(-self.max_steering, 0)
+                    self.heading = (self.heading + self.max_steering)%(2*pi)
+                    diff += self.max_steering
+                else:
+                    move = 'move {} {}'.format(self.max_steering, 0)
+                    diff -= self.max_steering
+                    self.heading = (self.heading - self.max_steering)%(2*pi)
+                if self.heading > radians(180):
+                    self.heading = -(radians(360) - self.heading)
+                squ.append(move)
+
+            #### the moving
+            distance = ((y_diff**2 + x_diff**2)**0.5)/2
+            while distance > self.max_distance:
+                move = 'move {} {}'.format(diff, distance)
+                self.heading = (self.heading - diff)%(2*pi)
+                if self.heading > radians(180):
+                    self.heading = -(radians(360) - self.heading)
+
+                robot_x += distance*cos(self.heading)
+                robot_y += distance*sin(self.heading)
+
+                diff -= 0
+                distance -= self.max_distance
+                squ.append(move)
+            
+            move = 'move {} {}'.format(diff, distance)
+            self.heading = (self.heading - diff)%(2*pi)
+            if self.heading > radians(180):
+                self.heading = -(radians(360) - self.heading)
+            robot_x += distance*2*cos(self.heading)
+            robot_y += distance*2*sin(self.heading)
+            self.robotloc = [robot_y, robot_x]
+
+            squ.append(move)
+        return squ
+
+
+
+    def straighter(self, road):
+        # check how long straight
+        lines = []
+        at = 0
+        line_s = road[at]
+        line_e = road[at + 1]
+        x = road[at+1][0] - road[at][0]  
+        y = road[at+1][1] - road[at][1]
+
+        at += 1
+        while at < len(road) - 1:
+            x_check = road[at+1][0] - road[at][0]  
+            y_check = road[at+1][1] - road[at][1]
+            
+            if x == x_check and y == y_check:
+                line_e = road[at + 1]
+                at += 1
+            else:
+                lines.append((line_s, line_e))
+                x = x_check
+                y = y_check
+                line_s = road[at]
+                line_e = road[at + 1]
+                at += 1
+
+            if at == len(road)-1:
+                lines.append((line_s, line_e))
+        return lines
+
 
     def action_reader(self, action_list):
-        
+        seques = []
+        part = []
+        rob = tuple(self.robotloc)
+        # part.append(rob)
+        for each in action_list:
+            if each [:4] == 'move':
+                x = each [-3]
+                y = each [-1]
+                x = int(x)
+                y = int(y)
+                part.append((x,y))
+            else:
+                
+                seques.append(part)
+                part = []
+                seques.append(each)
+        return seques
 
 
 def index_2d(myList, v):
@@ -403,9 +543,22 @@ class PartA_DeliveryPlanner:
                 if move_x > 0 and move_y > 0 and move_x < len(self.warehouse)-1 and move_y < len(self.warehouse[0])-1:
                     is_goal = goal[0] == move_x or goal[1] == move_y
                     movable = self.warehouse[move_x][move_y] == '.' or self.warehouse[move_x][move_y] == '@'
+
+                    # if it is diagonal
+                    diag = True
+                    if self.pos_moves[i][0] != 0 or self.pos_moves[i][1] != 0:
+                        # we have to check the wall
+                        # first at x 
+                        x_wise =  self.warehouse[move_x][y] == '.' or self.warehouse[move_x][y] == '@'
+                        y_wise = self.warehouse[x][move_y] == '.' or self.warehouse[x][move_y] == '@'
+                        if x_wise and y_wise:
+                            diag = True
+                        else:
+                            diag = False 
+
                     is_move = movable or is_goal
 
-                    if is_move:
+                    if is_move and diag:
                         if visited[move_x][move_y] == False and self.warehouse[move_x][move_y] != '#':
                             g_val = g_scores[move_x][move_y]
                             # get the distance of old node
@@ -427,8 +580,10 @@ class PartA_DeliveryPlanner:
         route_at = list(goal)
         # last step is not needed
         goal_parent = parents[goal[0]][goal[1]]
-        route_at[0] = goal[0] + self.pos_moves[goal_parent][0]
-        route_at[1] = goal[1] + self.pos_moves[goal_parent][1]
+        route_at[0] = goal[0]
+        route_at[1] = goal[1]
+        # route_at[0] = goal[0] + self.pos_moves[goal_parent][0]
+        # route_at[1] = goal[1] + self.pos_moves[goal_parent][1]
         first = self.robot_loc[:]
         self.robot_loc = route_at[:]
         return_list = []
@@ -445,6 +600,10 @@ class PartA_DeliveryPlanner:
             route_at[1] = route_at[1] + self.pos_moves[parent][1]
 
             return_list.insert(0, road_back)
+        
+        road_back = "move {} {}".format(first[0]-1, first[1]-1)
+        return_list.insert(0, road_back)
+
 
         return return_list
 

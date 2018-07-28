@@ -1,7 +1,7 @@
 PART B TEST CASE RESULTS
 -----------
 Test Case 1
-Failed: TypeError("'NoneType' object is not iterable",)
+Failed: ZeroDivisionError('integer division or modulo by zero',)
 credit: 0
 -----------
 Total Credit: 0.00
