@@ -205,9 +205,9 @@ class DeliveryPlanner:
         drop_y = drop_y*2+1
 
         last[int(drop_x)][int(drop_y)] = '@'     
-        self.droploc = [drop_x, drop_y]
+        self.droploc = [drop_y, drop_x]
         self.warehouse = last
-        self.robotloc = [drop_x, drop_y]
+        self.robotloc = [drop_y, drop_x]
         
 
     def plan_delivery(self):
@@ -215,11 +215,14 @@ class DeliveryPlanner:
 
         student_planner = PartA_DeliveryPlanner(copy.copy(self.warehouse), copy.copy(self.todo))
         action_list = student_planner.plan_delivery()
-        
+        for each in action_list:
+            print each
         nodes = self.action_reader(action_list)
 
         straight_lines = self.road_maker(nodes)
-
+        for each in straight_lines:
+            print each
+        return straight_lines
         # # Sample of what a moves list should look like - replace with your planner results
 
         # moves = ['move 1.570963 2.0',   # rotate and move north 2 spaces
@@ -246,16 +249,37 @@ class DeliveryPlanner:
     # the point is not to hit walls here
     def road_maker(self, nodes):
         # start checking from first to last
+        the_road = []
         for road in nodes:
             # see if it is a list
             try:
                 road + []
                 lines = self.straighter(road)
                 line_road = self.line_to_road(lines)
-                a = 1+1
+                
+                # last stepo is shorter
+                last = line_road[-1].split()
+                dist = float(last[-1])
+                dist -= 0.49
+                last[-1] = str(dist)
+                sent = ' '.join(last)
+                line_road[-1] = sent
+                the_road.extend(line_road)
             except TypeError:
-                l = False
-            
+                if road[:4] == 'lift':
+                    the_road.append(road)
+                else:
+                    x = (self.droploc[0] * 1.) / 2
+                    y = -(self.droploc[1] * 1.) / 2
+                    sent = 'down {} {}'.format(x, y)
+                    the_road.append(sent)
+                
+                dist = last[:1]
+                dist.append('0')
+                dist.append('0.49')
+                sent = ' '.join(dist)
+                the_road.append(sent)
+        return the_road
 
     def line_to_road(self, lines):
         squ = []
@@ -301,15 +325,15 @@ class DeliveryPlanner:
             #### the moving
             distance = ((y_diff**2 + x_diff**2)**0.5)/2
             while distance > self.max_distance:
-                move = 'move {} {}'.format(diff, distance)
+                move = 'move {} {}'.format(diff, self.max_distance)
                 self.heading = (self.heading - diff)%(2*pi)
                 if self.heading > radians(180):
-                    self.heading = -(radians(360) - self.heading)
+                    self.heading = -(radians(360) - self.heading) 
 
-                robot_x += distance*cos(self.heading)
-                robot_y += distance*sin(self.heading)
+                robot_x += self.max_distance*cos(self.heading)
+                robot_y += self.max_distance*sin(self.heading)
 
-                diff -= 0
+                diff = 0
                 distance -= self.max_distance
                 squ.append(move)
             
@@ -317,6 +341,7 @@ class DeliveryPlanner:
             self.heading = (self.heading - diff)%(2*pi)
             if self.heading > radians(180):
                 self.heading = -(radians(360) - self.heading)
+        
             robot_x += distance*2*cos(self.heading)
             robot_y += distance*2*sin(self.heading)
             self.robotloc = [robot_y, robot_x]
@@ -359,12 +384,12 @@ class DeliveryPlanner:
     def action_reader(self, action_list):
         seques = []
         part = []
-        rob = tuple(self.robotloc)
         # part.append(rob)
         for each in action_list:
             if each [:4] == 'move':
-                x = each [-3]
-                y = each [-1]
+                sp = each.split()
+                x = sp[-2]
+                y = sp[-1]
                 x = int(x)
                 y = int(y)
                 part.append((x,y))
@@ -532,21 +557,25 @@ class PartA_DeliveryPlanner:
         heappush(the_heap, first_node)
         cur_loc = [-1, -1]
         while len(the_heap) > 0 and cur_loc != goal:
+
+
             cur_node = heappop(the_heap)
             x = cur_node[2]
             y = cur_node[3]
             cur_loc = (x, y)
+            if cur_loc == (2,4):
+                a = 2
             visited[x][y] = True
             for i in range(len(self.pos_moves)):
                 move_x = x + self.pos_moves[i][0]
                 move_y = y + self.pos_moves[i][1]
                 if move_x > 0 and move_y > 0 and move_x < len(self.warehouse)-1 and move_y < len(self.warehouse[0])-1:
-                    is_goal = goal[0] == move_x or goal[1] == move_y
+                    is_goal = goal[0] == move_x and goal[1] == move_y
                     movable = self.warehouse[move_x][move_y] == '.' or self.warehouse[move_x][move_y] == '@'
 
                     # if it is diagonal
                     diag = True
-                    if self.pos_moves[i][0] != 0 or self.pos_moves[i][1] != 0:
+                    if not (self.pos_moves[i][0] == 0 or self.pos_moves[i][1] == 0):
                         # we have to check the wall
                         # first at x 
                         x_wise =  self.warehouse[move_x][y] == '.' or self.warehouse[move_x][y] == '@'

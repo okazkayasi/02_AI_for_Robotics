@@ -1,7 +1,7 @@
 PART B TEST CASE RESULTS
 -----------
 Test Case 1
-Failed: ZeroDivisionError('integer division or modulo by zero',)
-credit: 0
+cost: 43.75  (expected min 38.00)
+credit: 0.87
 -----------
-Total Credit: 0.00
+Total Credit: 0.87
